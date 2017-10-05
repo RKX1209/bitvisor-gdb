@@ -1,7 +1,7 @@
 #!/bin/sh
-NAME=k2e
-ELF=k2e.elf
-EFI_PATH=/boot/efi/EFI/k2e
+NAME=bitvisor
+ELF=bitvisor.elf
+EFI_PATH=/boot/efi/EFI/bitvisor
 BOOT=boot/uefi-loader/loadvmm.efi
 BOOT2=boot/uefi-loader/loadvmm.dll
 
