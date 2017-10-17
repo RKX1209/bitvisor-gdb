@@ -7,6 +7,27 @@
 
 #include <core/types.h>
 
+#define MAX_PACKET_SIZE 4096
+
+enum RSState {
+    RS_INACTIVE,
+    RS_IDLE,
+    RS_GETLINE,
+    RS_GETLINE_ESC,
+    RS_GETLINE_RLE,
+    RS_CHKSUM1,
+    RS_CHKSUM2,
+};
+
+typedef struct GDBState {
+  enum RSState state;
+  int line_sum; /* running checksum */
+  int line_csum; /* checksum */  
+  int line_buf_index;
+  char line_buf[MAX_PACKET_SIZE];
+}GDBState;
+
+void gdb_stub_init(void);
 void gdb_chr_receive (u8 *buf, u16 size);
 
 #endif

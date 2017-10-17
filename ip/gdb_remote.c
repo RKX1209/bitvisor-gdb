@@ -49,7 +49,6 @@ static err_t gdb_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, er
 
 static err_t gdb_server_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
 {
-  err_t ret_err;
   struct gdb_server_state *gs;
 
   LWIP_UNUSED_ARG(arg);
@@ -71,6 +70,7 @@ static err_t gdb_server_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
 
 void gdb_server_init (int port)
 {
+  gdb_stub_init();
   gdb_pcb = tcp_new();
   if (gdb_pcb != NULL)
   {
