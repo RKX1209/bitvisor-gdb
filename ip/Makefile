@@ -2,7 +2,7 @@ LWIP_VERSION=1.4.1
 
 CFLAGS += -I$(DIR)/include -I$(DIR)/include/arch -I$(DIR)/include/lwip \
 	-I$(DIR)/lwip-$(LWIP_VERSION)/src/include \
-	-I$(DIR)/lwip-$(LWIP_VERSION)/src/include/ipv4 \
+	-I$(DIR)/lwip-$(LWIP_VERSION)/src/include/ipv4 -I$(DIR)/.. \
 
 objs-1 += lwip-$(LWIP_VERSION)/src/core/def.o
 objs-1 += lwip-$(LWIP_VERSION)/src/core/dhcp.o
@@ -41,3 +41,4 @@ objs-1 += lwip-$(LWIP_VERSION)/src/api/tcpip.o
 objs-1 += ip_sys.o arch/sys_arch.o
 objs-1 += ip_main.o net_main.o
 objs-1 += echo-server.o echo-client.o echoctl.o
+objs-1 += gdb_remote.o
