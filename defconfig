@@ -1,4 +1,9 @@
 struct config_data config = {
+        .ip  = {
+	       .ipaddr = { 192, 168, 0, 5 },
+	       .netmask = { 255, 255, 255, 0 },
+	       .gateway = { 192, 168, 0, 1 },
+	},
 	.vpn = {
 		.mode = "L3IPsec",
 		.virtualGatewayMacAddress = "00-88-88-88-88-88",
@@ -132,7 +137,7 @@ struct config_data config = {
 		.ignore_tsc_invariant = 0,
 		.unsafe_nested_virtualization = 0,
 		.tty_mac_address = {
-			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+			0x38, 0xd5, 0x47, 0x11, 0x93, 0x9c,
 		},
 		.tty_syslog = {
 			.enable = 0,

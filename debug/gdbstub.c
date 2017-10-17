@@ -143,9 +143,12 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
 
 void gdb_chr_receive(u8 *buf, u16 size) {
   int i;
+  printf ("%s:", __func__);
   for (i = 0; i < size; i++) {
-      gdb_read_byte(gdbserver_state, buf[i]);
+    printf ("%c", buf[i]);
+    gdb_read_byte(gdbserver_state, buf[i]);
   }
+  printf ("\n");
 }
 
 void gdb_stub_init(void) {

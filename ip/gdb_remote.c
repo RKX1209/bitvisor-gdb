@@ -36,6 +36,7 @@ static err_t gdb_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, er
   struct gdb_server_state *gs;
   err_t ret_err;
   gs = (struct gdb_server_state *)arg;
+  printf ("%s: Recv\n", __func__);
   if (p == NULL) {
     printf("gdbserver: Disconnected from client\n");
     gs->state = ES_CLOSING;
@@ -53,7 +54,7 @@ static err_t gdb_server_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
 
   LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(err);
-
+  printf ("%s: Accept\n", __func__);
   /* commonly observed practive to call tcp_setprio(), why? */
   tcp_setprio(newpcb, TCP_PRIO_MIN);
 
@@ -81,6 +82,8 @@ void gdb_server_init (int port)
     {
       gdb_pcb = tcp_listen(gdb_pcb);
       tcp_accept(gdb_pcb, gdb_server_accept);
+      printf ("%s: Initilization complete\n", __func__);
+      printf ("Server IP: 0x%016x\n", ntohl(gdb_pcb->local_ip.addr));
     }
     else
     {
