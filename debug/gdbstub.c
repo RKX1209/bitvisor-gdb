@@ -4,7 +4,7 @@
  */
 
 #include <core/mm.h>
-#include <core/panic.h>
+#include <core/printf.h>
 #include <core/printf.h>
 #include <core/string.h>
 #include "gdbstub.h"
@@ -37,7 +37,7 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
         s->line_sum = 0;
         s->state = RS_GETLINE;
       } else {
-        panic("%s: received garbage between packets: 0x%x\n", __func__, ch);
+        //printf("%s: received garbage between packets: 0x%x\n", __func__, ch);
       }
       break;
     case RS_GETLINE:
@@ -53,7 +53,7 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
         s->state = RS_CHKSUM1;
       } else if (s->line_buf_index >= sizeof(s->line_buf) - 1) {
         s->state = RS_IDLE;
-        panic("%s: command buffer overrun, dropping command\n", __func__);
+        printf("%s: command buffer overrun, dropping command\n", __func__);
       } else {
         /* unescaped command character */
         s->line_buf[s->line_buf_index++] = ch;
@@ -67,7 +67,7 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
         } else if (s->line_buf_index >= sizeof(s->line_buf) - 1) {
             /* command buffer overrun */
             s->state = RS_IDLE;
-            panic("%s: command buffer overrun, dropping command\n", __func__);
+            printf("%s: command buffer overrun, dropping command\n", __func__);
         } else {
             /* parse escaped character and leave escape state */
             s->line_buf[s->line_buf_index++] = ch ^ 0x20;
@@ -79,17 +79,17 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
         if (ch < ' ') {
             /* invalid RLE count encoding */
             s->state = RS_GETLINE;
-            panic("%s: got invalid RLE count: 0x%x\n", __func__, ch);
+            printf("%s: got invalid RLE count: 0x%x\n", __func__, ch);
         } else {
             /* decode repeat length */
             int repeat = (unsigned char)ch - ' ' + 3;
             if (s->line_buf_index + repeat >= sizeof(s->line_buf) - 1) {
                 /* that many repeats would overrun the command buffer */
-                panic("%s: command buffer overrun, dropping command\n", __func__);
+                printf("%s: command buffer overrun, dropping command\n", __func__);
                 s->state = RS_IDLE;
             } else if (s->line_buf_index < 1) {
                 /* got a repeat but we have nothing to repeat */
-                panic("%s: got invalid RLE sequence\n", __func__);
+                printf("%s: got invalid RLE sequence\n", __func__);
                 s->state = RS_GETLINE;
             } else {
                 /* repeat the last character */
@@ -104,7 +104,7 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
       case RS_CHKSUM1:
           /* get high hex digit of checksum */
           if (!isxdigit(ch)) {
-              panic("%s:got invalid command checksum digit\n", __func__);
+              printf("%s:got invalid command checksum digit\n", __func__);
               s->state = RS_GETLINE;
               break;
           }
@@ -115,7 +115,7 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
       case RS_CHKSUM2:
           /* get low hex digit of checksum */
           if (!isxdigit(ch)) {
-              panic("%s: got invalid command checksum digit\n", __func__);
+              printf("%s: got invalid command checksum digit\n", __func__);
               s->state = RS_GETLINE;
               break;
           }
@@ -133,22 +133,22 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
               reply = '+';
               //put_buffer(s, &reply, 1);
               //s->state = gdb_handle_packet(s, s->line_buf);
+              s->state = RS_IDLE;
           }
           break;
       default:
-          panic("%s: got unknown status\n", __func__);
+          printf("%s: got unknown status\n", __func__);
           break;
     }
 }
 
 void gdb_chr_receive(u8 *buf, u16 size) {
   int i;
-  printf ("%s:", __func__);
   for (i = 0; i < size; i++) {
     printf ("%c", buf[i]);
     gdb_read_byte(gdbserver_state, buf[i]);
   }
-  printf ("\n");
+  printf("\n");
 }
 
 void gdb_stub_init(void) {
