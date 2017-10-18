@@ -11,6 +11,8 @@
 
 static GDBState *gdbserver_state;
 
+void gdb_server_send(u8 *buf, u16 len);
+
 static inline bool isxdigit(char ch) {
   return ('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F') || ('0' <= ch && ch <= '9');
 }
@@ -25,6 +27,10 @@ static inline int fromhex(int v)
       return v - 'a' + 10;
   else
       return 0;
+}
+
+static void gdb_write_buf(GDBState *s, u8 *buf, u16 size) {
+  gdb_server_send (buf, size);
 }
 
 static void gdb_read_byte(GDBState *s, u8 ch) {
@@ -125,13 +131,13 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
               printf("gdbserver: got command packet with incorrect checksum\n");
               /* send NAK reply */
               reply = '-';
-              //put_buffer(s, &reply, 1);
+              gdb_write_buf(s, &reply, 1);
               s->state = RS_IDLE;
           } else {
               printf("gdbserver: initialization complete\n");
               /* send ACK reply */
               reply = '+';
-              //put_buffer(s, &reply, 1);
+              gdb_write_buf(s, &reply, 1);
               //s->state = gdb_handle_packet(s, s->line_buf);
               s->state = RS_IDLE;
           }
