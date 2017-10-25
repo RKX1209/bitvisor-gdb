@@ -5,8 +5,7 @@
 
 #include <core/mm.h>
 #include <core/printf.h>
-#include <core/printf.h>
-#include <core/string.h>
+#include <common.h>
 #include "gdbstub.h"
 
 static GDBState *gdbserver_state;
@@ -29,8 +28,76 @@ static inline int fromhex(int v)
       return 0;
 }
 
+static inline int tohex(int v)
+{
+    if (v < 10)
+        return v + '0';
+    else
+        return v - 10 + 'a';
+}
+
+static int is_query_packet(const char *p, const char *query, char separator)
+{
+  unsigned int query_len = strlen(query);
+
+  return strncmp(p, query, query_len) == 0 &&
+      (p[query_len] == '\0' || p[query_len] == separator);
+}
+
 static void gdb_write_buf(GDBState *s, u8 *buf, u16 size) {
-  gdb_server_send (buf, size);
+  gdb_server_send(buf, size);
+}
+
+static void gdb_write_packet(GDBState *s, u8 *buf, u16 len) {
+  int csum, i;
+  u8 *p;
+  for (;;) {
+    p = s->last_packet;
+    *(p++) = '$';
+    memcpy(p, buf, len);
+    p += len;
+    csum = 0;
+    for(i = 0; i < len; i++) {
+        csum += buf[i];
+    }
+    *(p++) = '#';
+    *(p++) = tohex((csum >> 4) & 0xf);
+    *(p++) = tohex((csum) & 0xf);
+
+    s->last_packet_len = p - s->last_packet;
+    gdb_write_buf(s, (u8 *)s->last_packet, s->last_packet_len);
+    break;
+  }
+}
+
+static void gdb_put_packet(GDBState *s, char *buf) {
+  gdb_write_packet(s, buf, strlen(buf));
+}
+
+static int gdb_handle_packet(GDBState *s, const char *line_buf) {
+  const char *p;
+  int ch;
+  char buf[MAX_PACKET_LENGTH];
+  printf("command='%s'\n", line_buf);
+
+  p = line_buf;
+  ch = *p++;
+  switch(ch) {
+    case 'q':
+    case 'Q':
+    if (is_query_packet(p, "Supported", ':')) {
+        snprintf(buf, sizeof(buf), "PacketSize=%x", MAX_PACKET_LENGTH);
+        gdb_put_packet(s, buf);
+        break;
+    }
+    default:
+    unknown_command:
+      /* put empty packet */
+      buf[0] = '\0';
+      gdb_put_packet(s, buf);
+      break;
+  }
+  return RS_IDLE;
 }
 
 static void gdb_read_byte(GDBState *s, u8 ch) {
@@ -134,12 +201,11 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
               gdb_write_buf(s, &reply, 1);
               s->state = RS_IDLE;
           } else {
-              printf("gdbserver: initialization complete\n");
+              printf("gdbserver: valid packet!\n");
               /* send ACK reply */
               reply = '+';
               gdb_write_buf(s, &reply, 1);
-              //s->state = gdb_handle_packet(s, s->line_buf);
-              s->state = RS_IDLE;
+              s->state = gdb_handle_packet(s, s->line_buf);
           }
           break;
       default:
@@ -151,10 +217,8 @@ static void gdb_read_byte(GDBState *s, u8 ch) {
 void gdb_chr_receive(u8 *buf, u16 size) {
   int i;
   for (i = 0; i < size; i++) {
-    printf ("%c", buf[i]);
     gdb_read_byte(gdbserver_state, buf[i]);
   }
-  printf("\n");
 }
 
 void gdb_stub_init(void) {

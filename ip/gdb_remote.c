@@ -44,8 +44,9 @@ static void _gdb_server_send(struct tcp_pcb *tpcb, struct pbuf *data)
   err_t wr_err = ERR_OK;
   wr_err = tcp_write (tpcb, data->payload, data->len, 1);
   if (wr_err == ERR_OK) {
+    tcp_output(tpcb);
     u16_t plen = data->len;
-    //printf ("send: %c(%d)\n", ((char *)data->payload)[0], data->len);
+    printf ("send: %s(%d)\n", ((char *)data->payload), data->len);
     pbuf_free (data);
   } else if (wr_err == ERR_MEM) {
     printf ("%s: overflow send buffer\n", __func__);

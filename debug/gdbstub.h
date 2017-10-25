@@ -7,7 +7,7 @@
 
 #include <core/types.h>
 
-#define MAX_PACKET_SIZE 4096
+#define MAX_PACKET_LENGTH 4096
 
 enum RSState {
     RS_INACTIVE,
@@ -22,9 +22,11 @@ enum RSState {
 typedef struct GDBState {
   enum RSState state;
   int line_sum; /* running checksum */
-  int line_csum; /* checksum */  
+  int line_csum; /* checksum */
   int line_buf_index;
-  char line_buf[MAX_PACKET_SIZE];
+  char line_buf[MAX_PACKET_LENGTH];
+  u8 last_packet[MAX_PACKET_LENGTH + 4];
+  int last_packet_len;
 }GDBState;
 
 void gdb_stub_init(void);
