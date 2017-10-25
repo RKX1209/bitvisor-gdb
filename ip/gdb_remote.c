@@ -61,7 +61,7 @@ void gdb_server_send(u8_t *buf, u16_t len)
   }
   memcpy (ptr->payload, buf, len);
   LWIP_ASSERT("cur_pcb != NULL", cur_pcb != NULL);
-  tcp_sent (gdb_pcb, gdb_server_sent);
+  tcp_sent (cur_pcb, gdb_server_sent);
   _gdb_server_send (cur_pcb, ptr);
 }
 
