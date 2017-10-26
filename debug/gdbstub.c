@@ -5,9 +5,13 @@
 
 #include <core/mm.h>
 #include <core/printf.h>
+#include <core/strtol.h>
+#include <core/vt_regs.h>
 #include <common.h>
 #include "gdbstub.h"
 
+struct vcpu;
+extern struct vcpu *current;
 static GDBState *gdbserver_state;
 
 void gdb_server_send(u8 *buf, u16 len);
@@ -30,10 +34,32 @@ static inline int fromhex(int v)
 
 static inline int tohex(int v)
 {
-    if (v < 10)
-        return v + '0';
-    else
-        return v - 10 + 'a';
+  if (v < 10)
+      return v + '0';
+  else
+      return v - 10 + 'a';
+}
+
+static void memtohex(char *buf, const u8 *mem, int len)
+{
+  int i, c;
+  char *q;
+  q = buf;
+  for(i = 0; i < len; i++) {
+      c = mem[i];
+      *q++ = tohex(c >> 4);
+      *q++ = tohex(c & 0xf);
+  }
+  *q = '\0';
+}
+
+static void hextomem(u8 *mem, const char *buf, int len)
+{
+  int i;
+  for(i = 0; i < len; i++) {
+      mem[i] = (fromhex(buf[0]) << 4) | fromhex(buf[1]);
+      buf += 2;
+  }
 }
 
 static int is_query_packet(const char *p, const char *query, char separator)
@@ -42,6 +68,15 @@ static int is_query_packet(const char *p, const char *query, char separator)
 
   return strncmp(p, query, query_len) == 0 &&
       (p[query_len] == '\0' || p[query_len] == separator);
+}
+
+static int gdb_read_register(u8 *buf, int reg) {
+  if (reg == REG_PC) {
+    vt_read_ip((ulong *)buf);
+  } else {
+    vt_read_general_reg(reg, (ulong *)buf);
+  }
+  return sizeof(unsigned long);
 }
 
 static void gdb_write_buf(GDBState *s, u8 *buf, u16 size) {
@@ -76,21 +111,76 @@ static void gdb_put_packet(GDBState *s, char *buf) {
 
 static int gdb_handle_packet(GDBState *s, const char *line_buf) {
   const char *p;
-  int ch;
+  u32 thread;
+  int ch, reg_size, type, res;
   char buf[MAX_PACKET_LENGTH];
+  u8 mem_buf[MAX_PACKET_LENGTH];
+  unsigned long addr, len;
+
   printf("command='%s'\n", line_buf);
 
   p = line_buf;
   ch = *p++;
   switch(ch) {
-    case 'q':
-    case 'Q':
+  case '?':
+    /* XXX: Is it correct to fix thread id to '1'? */
+    snprintf(buf, sizeof(buf), "T%02xthread:%02x;", GDB_SIGNAL_TRAP, 1);
+    gdb_put_packet(s, buf);
+    break;
+  case 'g':
+    len = 0;
+    for (addr = 0; addr < GENERAL_REG_MAX; addr++) {
+      reg_size = gdb_read_register(mem_buf + len, addr);
+      len += reg_size;
+    }
+    memtohex(buf, mem_buf, len);
+    gdb_put_packet(s, buf);
+    break;
+  case 'p':
+    addr = strtol(p, (char **)&p, 16);
+    reg_size = gdb_read_register(mem_buf, addr);
+    if (reg_size) {
+      memtohex(buf, mem_buf, reg_size);
+      gdb_put_packet(s, buf);
+    } else {
+      gdb_put_packet(s, "E14");
+    }
+    break;
+  case 'q':
+  case 'Q':
     if (is_query_packet(p, "Supported", ':')) {
         snprintf(buf, sizeof(buf), "PacketSize=%x", MAX_PACKET_LENGTH);
         gdb_put_packet(s, buf);
         break;
+    } else if (strcmp(p,"C") == 0) {
+        gdb_put_packet(s, "QC1");
+        break;
     }
+    goto unknown_command;
+  case 'H':
+    type = *p++;
+    thread = strtol(p, (char **)&p, 16);
+    if (thread == -1 || thread == 0) {
+        gdb_put_packet(s, "OK");
+        break;
+    }
+    switch (type) {
+    case 'c':
+        gdb_put_packet(s, "OK");
+        break;
+    case 'g':
+        gdb_put_packet(s, "OK");
+        break;
     default:
+        gdb_put_packet(s, "E22");
+        break;
+    }
+    break;
+  case 'T':
+    thread = strtol(p, (char **)&p, 16);
+    gdb_put_packet(s, "OK");
+    break;
+  default:
     unknown_command:
       /* put empty packet */
       buf[0] = '\0';

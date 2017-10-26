@@ -35,7 +35,6 @@ static void gdb_server_close(struct tcp_pcb *tpcb, struct gdb_server_state *gs)
 
 static err_t gdb_server_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
 {
-  printf ("sent: %d byte\n", len);
   return ERR_OK;
 }
 
@@ -86,8 +85,6 @@ static err_t gdb_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, er
 
 static err_t gdb_server_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
 {
-  struct gdb_server_state *gs;
-
   LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(err);
   printf ("%s: Accept\n", __func__);
@@ -98,7 +95,7 @@ static err_t gdb_server_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   if (!gdb_state)
     panic ("%s: mem_malloc failed\n", __func__);
   gdb_state->pcb = newpcb;
-  /* pass newly allocated gs to our callbacks */
+  /* pass newly allocated pcb to our callbacks */
   tcp_arg(newpcb, gdb_state);
   tcp_recv(newpcb, gdb_server_recv);
   printf("gdbserver: connected from client!\n");
