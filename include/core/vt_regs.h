@@ -8,6 +8,24 @@
 
 #include <core/types.h>
 
+enum sreg {
+	SREG_ES = 0,
+	SREG_CS = 1,
+	SREG_SS = 2,
+	SREG_DS = 3,
+	SREG_FS = 4,
+	SREG_GS = 5,
+	SREG_DEFAULT = 7,
+};
+
+enum control_reg {
+	CONTROL_REG_CR0 = 0,
+	CONTROL_REG_CR2 = 2,
+	CONTROL_REG_CR3 = 3,
+	CONTROL_REG_CR4 = 4,
+	CONTROL_REG_CR8 = 8,
+};
+
 enum general_reg {
 	GENERAL_REG_RAX = 0,
 	GENERAL_REG_RCX = 1,
@@ -29,10 +47,17 @@ enum general_reg {
 };
 
 /* NOTE: $pc register index is 16 */
-#define REG_PC GENERAL_REG_MAX
-
+#define IDX_IP_REG 			GENERAL_REG_MAX
+#define IDX_FLAGS_REG   (IDX_IP_REG + 1)
+#define IDX_SEG_REGS    (IDX_FLAGS_REG + 1)
+#define IDX_FP_REGS     (IDX_SEG_REGS + 6)
+#define IDX_XMM_REGS    (IDX_FP_REGS + 16)
+#define IDX_MXCSR_REG   (IDX_XMM_REGS + CPU_NB_REGS)
 void vt_read_general_reg (enum general_reg reg, ulong *val);
 void vt_write_general_reg (enum general_reg reg, ulong val);
+void vt_read_sreg_sel (enum sreg s, ulong *val);
 void vt_read_ip (ulong *val);
 void vt_write_ip (ulong val);
+void vt_read_flags (ulong *val);
+void vt_write_flags (ulong val);
 #endif

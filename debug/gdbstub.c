@@ -86,10 +86,37 @@ static int target_memory_rw(u64 addr, u8 *buf, int len, bool is_write) {
 }
 
 static int gdb_read_register(u8 *buf, int reg) {
-  if (reg == REG_PC) {
-    vt_read_ip((ulong *)buf);
-  } else {
+  if (reg < GENERAL_REG_MAX) {
     vt_read_general_reg(reg, (ulong *)buf);
+  } else {
+    switch (reg) {
+    case IDX_IP_REG:
+      vt_read_ip((ulong *)buf);
+      break;
+    case IDX_FLAGS_REG:
+      vt_read_flags((ulong *)buf);
+      break;
+    case IDX_SEG_REGS:
+      vt_read_sreg_sel(SREG_CS, (ulong *)buf);
+      break;
+    case IDX_SEG_REGS + 1:
+      vt_read_sreg_sel(SREG_SS, (ulong *)buf);
+      break;
+    case IDX_SEG_REGS + 2:
+      vt_read_sreg_sel(SREG_DS, (ulong *)buf);
+      break;
+    case IDX_SEG_REGS + 3:
+      vt_read_sreg_sel(SREG_ES, (ulong *)buf);
+      break;
+    case IDX_SEG_REGS + 4:
+      vt_read_sreg_sel(SREG_FS, (ulong *)buf);
+      break;
+    case IDX_SEG_REGS + 5:
+      vt_read_sreg_sel(SREG_GS, (ulong *)buf);
+      break;
+    default:
+      break;
+    }
   }
   return sizeof(unsigned long);
 }
