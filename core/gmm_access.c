@@ -32,12 +32,14 @@
 #include "cache.h"
 #include "constants.h"
 #include "current.h"
+#include "cpu_mmu.h"
 #include <core/gmm_access.h>
 #include "mm.h"
 #include "mmio.h"
 #include "panic.h"
 #include "pcpu.h"
 #include "printf.h"
+#include "vt_regs.h"
 
 void
 read_gphys_b (u64 phys, void *data, u32 attr)
@@ -182,6 +184,32 @@ write_gphys_q (u64 phys, u64 data, u32 attr)
 }
 
 /* RKX: Read/Write method for guest virtual address */
+phys_t
+gvirt_to_phys (virt_t virt)
+{
+	ulong cr0, cr3, cr4;
+	u64 efer;
+	u64 ent[5];
+	phys_t physaddr;
+	int levels;
+	enum vmmerr res;
+
+	current->vmctl.read_control_reg (CONTROL_REG_CR0, &cr0);
+	current->vmctl.read_control_reg (CONTROL_REG_CR3, &cr3);
+	current->vmctl.read_control_reg (CONTROL_REG_CR4, &cr4);
+	current->vmctl.read_msr (MSR_IA32_EFER, &efer);
+
+	if ((res = cpu_mmu_get_pte (virt, cr0, cr3, cr4, efer,
+											false, false, false, ent, &levels)) == VMMERR_SUCCESS) {
+	  physaddr = (ent[0] & PTE_ADDR_MASK64) | ((virt) & 0xFFF);
+	} else {
+		printf("gvirt_to_phys failed: reason %d\n", res);
+		return -1;
+	}
+	printf("virt: 0x%016lx => phys: 0x%016lx\n", virt, physaddr);
+	return physaddr;
+}
+
 int
 read_gvirt_b (u64 virt, void *data, u32 attr)
 {

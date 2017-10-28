@@ -75,12 +75,13 @@ static int target_memory_rw(u64 addr, u8 *buf, int len, bool is_write) {
   printf("[%s] addr 0x%016lx(%d byte)\n", (is_write?"WRITE":"READ"), addr, len);
   unsigned int i;
   for (i = 0; i < len; i++) {
-    if (is_write)
-      if (write_gvirt_b (addr, &buf[i], 0) == -1)
+    if (is_write) {
+      if (write_gvirt_b (addr + i, &buf[i], 0) == -1)
         return -1;
-    else
-      if (read_gvirt_b (addr, &buf[i], 0) == -1)
+    } else {
+      if (read_gvirt_b (addr + i, &buf[i], 0) == -1)
         return -1;
+    }
   }
   return 0;
 }
