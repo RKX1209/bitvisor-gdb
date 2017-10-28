@@ -3,6 +3,7 @@
  * All rights reserved.
  */
 
+#include <core/gmm_access.h>
 #include <core/mm.h>
 #include <core/printf.h>
 #include <core/strtol.h>
@@ -70,6 +71,20 @@ static int is_query_packet(const char *p, const char *query, char separator)
       (p[query_len] == '\0' || p[query_len] == separator);
 }
 
+static int target_memory_rw(u64 addr, u8 *buf, int len, bool is_write) {
+  printf("[%s] addr 0x%016lx(%d byte)\n", (is_write?"WRITE":"READ"), addr, len);
+  unsigned int i;
+  for (i = 0; i < len; i++) {
+    if (is_write)
+      if (write_gvirt_b (addr, &buf[i], 0) == -1)
+        return -1;
+    else
+      if (read_gvirt_b (addr, &buf[i], 0) == -1)
+        return -1;
+  }
+  return 0;
+}
+
 static int gdb_read_register(u8 *buf, int reg) {
   if (reg == REG_PC) {
     vt_read_ip((ulong *)buf);
@@ -135,6 +150,25 @@ static int gdb_handle_packet(GDBState *s, const char *line_buf) {
     }
     memtohex(buf, mem_buf, len);
     gdb_put_packet(s, buf);
+    break;
+  case 'm':
+    addr = strtol(p, (char **)&p, 16);
+    if (*p == ',')
+        p++;
+    len = strtol(p, NULL, 16);
+
+    /* memtohex() doubles the required space */
+    if (len > MAX_PACKET_LENGTH / 2) {
+        gdb_put_packet (s, "E22");
+        break;
+    }
+
+    if (target_memory_rw (addr, mem_buf, len, false) != 0) {
+        gdb_put_packet (s, "E14");
+    } else {
+        memtohex(buf, mem_buf, len);
+        gdb_put_packet(s, buf);
+    }
     break;
   case 'p':
     addr = strtol(p, (char **)&p, 16);

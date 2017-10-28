@@ -803,36 +803,42 @@ unmap_user_area (void)
  */
 phys_t gvirt_to_phys (virt_t virt)
 {
-	ulong cr3, size;
+	ulong cr3;
 	u64 pml4e_addr, pml4e, pdpe_addr, pdpe, pde_addr, pde, pte_addr, pte;
 	int page_size = 4096;
 	u32 page_offset;
 
 	//We must get "guest" CR3
 	vt_read_control_reg(CONTROL_REG_CR3, &cr3);
+	printf("virt: 0x%016lx CR3: 0x%016lx\n", virt, cr3);
 #ifdef __x86_64__
 	pml4e_addr = (cr3 & PG_ADDRESS_MASK) + (((virt >> 39) & 0x1ff) << 3);
+	printf("PML4: 0x%016lx\n", pml4e_addr);
 	read_gphys_q (pml4e_addr, &pml4e, 0);
 	if (!(pml4e & PG_PRESENT_MASK)) {
 		return -1;
 	}
 	pdpe_addr = (pml4e & PG_ADDRESS_MASK) + (((virt >> 30) & 0x1ff) << 3);
-	read_gphys_q (pml4e_addr, &pdpe, 0);
+	printf("PDP: 0x%016lx\n", pdpe_addr);
+	read_gphys_q (pdpe_addr, &pdpe, 0);
 	if (!(pdpe & PG_PRESENT_MASK)) {
 		return -1;
 	}
 	pde_addr = (pdpe & PG_ADDRESS_MASK) + (((virt >> 21) & 0x1ff) << 3);
+	printf("PD: 0x%016lx\n", pde_addr);
 	read_gphys_q (pde_addr, &pde, 0);
 	if (!(pde & PG_PRESENT_MASK)) {
 		return -1;
 	}
 	pte_addr = (pde & PG_ADDRESS_MASK) + (((virt >> 12) & 0x1ff) << 3);
+	printf("PTE: 0x%016lx\n", pte_addr);
 	read_gphys_q (pte_addr, &pte, 0);
 	if (!(pte & PG_PRESENT_MASK)) {
 		return -1;
 	}
 	pte &= PG_ADDRESS_MASK & ~(page_size - 1);
 	page_offset = (virt & TARGET_PAGE_MASK) & (page_size - 1);
+	printf("virt: 0x%016lx => phys: 0x%016lx\n", virt, pte | page_offset);
 	return pte | page_offset;
 #endif
 	return -1;

@@ -13,14 +13,14 @@ void write_gphys_l (u64 phys, u32 data, u32 attr);
 void read_gphys_q (u64 phys, void *data, u32 attr);
 void write_gphys_q (u64 phys, u64 data, u32 attr);
 
-void read_gvirt_b (u64 virt, void *data, u32 attr);
-void write_gvirt_b (u64 virt, void *data, u32 attr);
-void read_gvirt_w (u64 virt, void *data, u32 attr);
-void write_gvirt_w (u64 virt, void *data, u32 attr);
-void read_gvirt_l (u64 virt, void *data, u32 attr);
-void write_gvirt_l (u64 virt, void *data, u32 attr);
-void read_gvirt_q (u64 virt, void *data, u32 attr);
-void write_gvirt_q (u64 virt, void *data, u32 attr);
+int read_gvirt_b (u64 virt, void *data, u32 attr);
+int write_gvirt_b (u64 virt, u32 data, u32 attr);
+int read_gvirt_w (u64 virt, void *data, u32 attr);
+int write_gvirt_w (u64 virt, u32 ata, u32 attr);
+int read_gvirt_l (u64 virt, void *data, u32 attr);
+int write_gvirt_l (u64 virt, u32 data, u32 attr);
+int read_gvirt_q (u64 virt, void *data, u32 attr);
+int write_gvirt_q (u64 virt, u64 data, u32 attr);
 
 bool cmpxchg_gphys_l (u64 phys, u32 *olddata, u32 data, u32 attr);
 bool cmpxchg_gphys_q (u64 phys, u64 *olddata, u64 data, u32 attr);
