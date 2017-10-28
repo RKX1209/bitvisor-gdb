@@ -35,7 +35,7 @@
 #include "constants.h"
 #include "current.h"
 #include "entry.h"
-#include "gmm_access.h"
+#include <core/gmm_access.h>
 #include "initfunc.h"
 #include "int.h"
 #include "linkage.h"

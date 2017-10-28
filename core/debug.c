@@ -30,7 +30,7 @@
 #include "constants.h"
 #include "cpu_mmu.h"
 #include "debug.h"
-#include "gmm_access.h"
+#include <core/gmm_access.h>
 #include "i386-stub.h"
 #include "int.h"
 #include "mm.h"

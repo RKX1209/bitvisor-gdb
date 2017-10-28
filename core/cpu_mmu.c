@@ -31,7 +31,7 @@
 #include "constants.h"
 #include "cpu_mmu.h"
 #include "current.h"
-#include "gmm_access.h"
+#include <core/gmm_access.h>
 #include "mm.h"
 #include "panic.h"
 #include "printf.h"
