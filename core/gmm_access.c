@@ -181,6 +181,61 @@ write_gphys_q (u64 phys, u64 data, u32 attr)
 	mmio_unlock ();
 }
 
+/* RKX: Read/Write method for guest virtual address */
+void
+read_gvirt_b (u64 virt, void *data, u32 attr)
+{
+	u64 phys = gvirt_to_phys (virt);
+	return read_gphys_b (phys, data, attr);
+}
+
+void
+write_gvirt_b (u64 virt, void *data, u32 attr)
+{
+	u64 phys = gvirt_to_phys (virt);
+	return write_gphys_b (phys, data, attr);
+}
+void
+read_gvirt_w (u64 virt, void *data, u32 attr)
+{
+	u64 phys = gvirt_to_phys (virt);
+	return read_gphys_w (phys, data, attr);
+}
+
+void
+write_gvirt_w (u64 virt, void *data, u32 attr)
+{
+	u64 phys = gvirt_to_phys (virt);
+	return write_gphys_w (phys, data, attr);
+}
+void
+read_gvirt_l (u64 virt, void *data, u32 attr)
+{
+	u64 phys = gvirt_to_phys (virt);
+	return read_gphys_l (phys, data, attr);
+}
+
+void
+write_gvirt_l (u64 virt, void *data, u32 attr)
+{
+	u64 phys = gvirt_to_phys (virt);
+	return write_gphys_l (phys, data, attr);
+}
+
+void
+read_gvirt_q (u64 virt, void *data, u32 attr)
+{
+	u64 phys = gvirt_to_phys (virt);
+	return read_gphys_q (phys, data, attr);
+}
+
+void
+write_gvirt_q (u64 virt, void *data, u32 attr)
+{
+	u64 phys = gvirt_to_phys (virt);
+	return write_gphys_q (phys, data, attr);
+}
+
 bool
 cmpxchg_gphys_l (u64 phys, u32 *olddata, u32 data, u32 attr)
 {

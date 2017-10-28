@@ -39,6 +39,35 @@
 #define MAPMEM_PCD			0x10
 #define MAPMEM_PAT			0x80
 
+#define PG_PRESENT_BIT  0
+#define PG_RW_BIT       1
+#define PG_USER_BIT     2
+#define PG_PWT_BIT      3
+#define PG_PCD_BIT      4
+#define PG_ACCESSED_BIT 5
+#define PG_DIRTY_BIT    6
+#define PG_PSE_BIT      7
+#define PG_GLOBAL_BIT   8
+#define PG_PSE_PAT_BIT  12
+#define PG_PKRU_BIT     59
+#define PG_NX_BIT       63
+
+#define PG_PRESENT_MASK  (1 << PG_PRESENT_BIT)
+#define PG_RW_MASK       (1 << PG_RW_BIT)
+#define PG_USER_MASK     (1 << PG_USER_BIT)
+#define PG_PWT_MASK      (1 << PG_PWT_BIT)
+#define PG_PCD_MASK      (1 << PG_PCD_BIT)
+#define PG_ACCESSED_MASK (1 << PG_ACCESSED_BIT)
+#define PG_DIRTY_MASK    (1 << PG_DIRTY_BIT)
+#define PG_PSE_MASK      (1 << PG_PSE_BIT)
+#define PG_GLOBAL_MASK   (1 << PG_GLOBAL_BIT)
+#define PG_PSE_PAT_MASK  (1 << PG_PSE_PAT_BIT)
+#define PG_ADDRESS_MASK  0x000ffffffffff000LL
+
+#define TARGET_PAGE_BITS 12
+#define TARGET_PAGE_SIZE (1 << TARGET_PAGE_BITS)
+#define TARGET_PAGE_MASK ~(TARGET_PAGE_SIZE - 1)
+
 struct mempool;
 
 int alloc_pages (void **virt, u64 *phys, int n);

@@ -56,7 +56,7 @@ enum general_reg {
 	GENERAL_REG_R12 = 12,
 	GENERAL_REG_R13 = 13,
 	GENERAL_REG_R14 = 14,
-	GENERAL_REG_R15 = 15,
+	GENERAL_REG_R15 = 15,	
 };
 
 #endif

@@ -47,6 +47,7 @@
 #include "spinlock.h"
 #include "string.h"
 #include "uefi.h"
+#include "vt_regs.h"
 
 #define VMMSIZE_ALL		(128 * 1024 * 1024)
 #define NUM_OF_PAGES		(VMMSIZE_ALL >> PAGESIZE_SHIFT)
@@ -795,6 +796,46 @@ unmap_user_area (void)
 	currentcpu->cr3 = phys;
 	/* Free the dummy page */
 	mm_process_free (mm_process_switch (1));
+}
+
+/* RKX: Guest virt to guest phys address method
+ * XXX: 64bit (!PAE) 4KB page support only
+ */
+phys_t gvirt_to_phys (virt_t virt)
+{
+	ulong cr3, size;
+	u64 pml4e_addr, pml4e, pdpe_addr, pdpe, pde_addr, pde, pte_addr, pte;
+	int page_size = 4096;
+	u32 page_offset;
+
+	//We must get "guest" CR3
+	vt_read_control_reg(CONTROL_REG_CR3, &cr3);
+#ifdef __x86_64__
+	pml4e_addr = (cr3 & PG_ADDRESS_MASK) + (((virt >> 39) & 0x1ff) << 3);
+	read_gphys_q (pml4e_addr, &pml4e, 0);
+	if (!(pml4e & PG_PRESENT_MASK)) {
+		return -1;
+	}
+	pdpe_addr = (pml4e & PG_ADDRESS_MASK) + (((virt >> 30) & 0x1ff) << 3);
+	read_gphys_q (pml4e_addr, &pdpe, 0);
+	if (!(pdpe & PG_PRESENT_MASK)) {
+		return -1;
+	}
+	pde_addr = (pdpe & PG_ADDRESS_MASK) + (((virt >> 21) & 0x1ff) << 3);
+	read_gphys_q (pde_addr, &pde, 0);
+	if (!(pde & PG_PRESENT_MASK)) {
+		return -1;
+	}
+	pte_addr = (pde & PG_ADDRESS_MASK) + (((virt >> 12) & 0x1ff) << 3);
+	read_gphys_q (pte_addr, &pte, 0);
+	if (!(pte & PG_PRESENT_MASK)) {
+		return -1;
+	}
+	pte &= PG_ADDRESS_MASK & ~(page_size - 1);
+	page_offset = (virt & TARGET_PAGE_MASK) & (page_size - 1);
+	return pte | page_offset;
+#endif
+	return -1;
 }
 
 static void
@@ -1953,7 +1994,7 @@ pmap_read (pmap_t *m)
 		}
 	}
 	return m->entry[m->curlevel];
-}	
+}
 
 bool
 pmap_write (pmap_t *m, u64 e, uint attrmask)
