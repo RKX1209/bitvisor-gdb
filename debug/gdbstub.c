@@ -122,6 +122,53 @@ static int gdb_read_register(u8 *buf, int reg) {
   return sizeof(unsigned long);
 }
 
+static int hw_breakpoint_insert(unsigned long addr, unsigned long len, int type)
+{
+  const u8 type_code[] = {
+      [GDB_BREAKPOINT_HW] = 0x0,
+      [GDB_WATCHPOINT_WRITE] = 0x1,
+      [GDB_WATCHPOINT_ACCESS] = 0x3
+  };
+  const u8 len_code[] = {
+      [1] = 0x0, [2] = 0x1, [4] = 0x3, [8] = 0x2
+  };
+  u32 dr7 = 0x0600;
+
+  if (nb_hw_breakpoint > DEBUG_REG_MAX)
+    return -1;
+  vt_write_dr(nb_hw_breakpoint, addr);
+  int n = nb_hw_breakpoint;
+  dr7 |= (2 << (n * 2)) |
+      (type_code[type] << (16 + n * 4)) |
+      ((u32)len_code[type] << (18 + n * 4));
+  vt_write_dr(DEBUG_REG_DR7, dr7);
+  nb_hw_breakpoint++;
+}
+
+static int gdb_breakpoint_insert(unsigned long addr, unsigned long len, int type)
+{
+  int err = 0;
+  switch (type) {
+    case GDB_BREAKPOINT_SW:
+    case GDB_BREAKPOINT_HW:
+      hw_breakpoint_insert (addr, len, type);
+      break;
+    case GDB_WATCHPOINT_WRITE:
+    case GDB_WATCHPOINT_READ:
+    case GDB_WATCHPOINT_ACCESS:
+      /* TODO: */
+      break;
+    default:
+      break;
+  }
+  return err;
+}
+
+static int gdb_breakpoint_remove(unsigned long addr, unsigned long len, int type)
+{
+
+}
+
 static void gdb_write_buf(GDBState *s, u8 *buf, u16 size) {
   gdb_server_send(buf, size);
 }
@@ -219,6 +266,25 @@ static int gdb_handle_packet(GDBState *s, const char *line_buf) {
         break;
     }
     goto unknown_command;
+  case 'z':
+  case 'Z':
+    type = strtol(p, (char **)&p, 16);
+    if (*p == ',')
+        p++;
+    addr = strtol(p, (char **)&p, 16);
+    if (*p == ',')
+        p++;
+    len = strtol(p, (char **)&p, 16);
+    if (ch == 'Z')
+        res = gdb_breakpoint_insert(addr, len, type);
+    else
+        res = gdb_breakpoint_remove(addr, len, type);
+    if (res >= 0)
+        gdb_put_packet(s, "OK");
+    else
+        gdb_put_packet(s, "E22");
+    break;
+
   case 'H':
     type = *p++;
     thread = strtol(p, (char **)&p, 16);
@@ -376,6 +442,7 @@ void gdb_chr_receive(u8 *buf, u16 size) {
 void gdb_stub_init(void) {
   GDBState *s;
   s = gdbserver_state;
+  nb_hw_breakpoint = 0;
   if (!s) {
     s = alloc (sizeof (GDBState));
     gdbserver_state = s;

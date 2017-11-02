@@ -618,6 +618,33 @@ vt_write_idtr (ulong base, ulong limit)
 	}
 }
 
+void vt_read_dr (enum debug_reg reg, ulong *val)
+{
+	if (reg == DEBUG_REG_DR0)
+		asm_rddr0 (val);
+	else if (reg == DEBUG_REG_DR1)
+		asm_rddr1 (val);
+	else if (reg == DEBUG_REG_DR2)
+		asm_rddr2 (val);
+	else if (reg == DEBUG_REG_DR3)
+		asm_rddr3 (val);
+	else if (reg == DEBUG_REG_DR7)
+		asm_vmread (VMCS_GUEST_DR7, val);
+}
+void vt_write_dr (enum debug_reg reg, ulong val)
+{
+	if (reg == DEBUG_REG_DR0)
+		asm_wridr0 (val);
+	else if (reg == DEBUG_REG_DR1)
+		asm_wridr1 (val);
+	else if (reg == DEBUG_REG_DR2)
+		asm_wridr2 (val);
+	else if (reg == DEBUG_REG_DR3)
+		asm_wridr3 (val);
+	else if (reg == DEBUG_REG_DR7)
+		asm_vmwrite (VMCS_GUEST_DR7, val);
+}
+
 void
 vt_get_current_regs_in_vmcs (struct regs_in_vmcs *p)
 {

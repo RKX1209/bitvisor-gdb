@@ -7,6 +7,12 @@
 
 #include <core/types.h>
 
+#define GDB_BREAKPOINT_SW        0
+#define GDB_BREAKPOINT_HW        1
+#define GDB_WATCHPOINT_WRITE     2
+#define GDB_WATCHPOINT_READ      3
+#define GDB_WATCHPOINT_ACCESS    4
+
 #define MAX_PACKET_LENGTH 4096
 
 enum RSState {
@@ -43,5 +49,7 @@ typedef struct GDBState {
 
 void gdb_stub_init(void);
 void gdb_chr_receive (u8 *buf, u16 size);
+
+int nb_hw_breakpoint;
 
 #endif

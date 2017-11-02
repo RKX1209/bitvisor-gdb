@@ -26,6 +26,14 @@ enum control_reg {
 	CONTROL_REG_CR8 = 8,
 };
 
+enum debug_reg {
+	DEBUG_REG_DR0 = 0,
+	DEBUG_REG_DR1 = 1,
+	DEBUG_REG_DR2 = 2,
+	DEBUG_REG_DR3 = 3,
+	DEBUG_REG_DR7 = 3,
+};
+
 enum general_reg {
 	GENERAL_REG_RAX = 0,
 	GENERAL_REG_RCX = 1,
@@ -53,6 +61,9 @@ enum general_reg {
 #define IDX_FP_REGS     (IDX_SEG_REGS + 6)
 #define IDX_XMM_REGS    (IDX_FP_REGS + 16)
 #define IDX_MXCSR_REG   (IDX_XMM_REGS + CPU_NB_REGS)
+
+#define DEBUG_REG_MAX		4
+
 void vt_read_general_reg (enum general_reg reg, ulong *val);
 void vt_write_general_reg (enum general_reg reg, ulong val);
 void vt_read_sreg_sel (enum sreg s, ulong *val);
@@ -60,4 +71,7 @@ void vt_read_ip (ulong *val);
 void vt_write_ip (ulong val);
 void vt_read_flags (ulong *val);
 void vt_write_flags (ulong val);
+void vt_read_dr (enum debug_reg reg, ulong *val);
+void vt_write_dr (enum debug_reg reg, ulong val);
+
 #endif

@@ -35,6 +35,14 @@
 #include "cpu_mmu_spt.h"
 #include "regs.h"
 
+enum debug_reg {
+	DEBUG_REG_DR0 = 0,
+	DEBUG_REG_DR1 = 1,
+	DEBUG_REG_DR2 = 2,
+	DEBUG_REG_DR3 = 3,
+	DEBUG_REG_DR7 = 3,
+};
+
 struct regs_in_vmcs_sreg {
 	u16 sel;
 	ulong limit;

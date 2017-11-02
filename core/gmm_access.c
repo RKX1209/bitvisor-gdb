@@ -206,7 +206,7 @@ gvirt_to_phys (virt_t virt)
 		printf("gvirt_to_phys failed: reason %d\n", res);
 		return -1;
 	}
-	printf("virt: 0x%016lx => phys: 0x%016lx\n", virt, physaddr);
+	//printf("virt: 0x%016lx => phys: 0x%016lx\n", virt, physaddr);
 	return physaddr;
 }
 

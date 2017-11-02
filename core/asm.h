@@ -638,6 +638,59 @@ asm_wridtr (ulong idtbase, ulong idtlimit)
 }
 
 static inline void
+asm_wridr0 (ulong dr0)
+{
+	asm volatile ("mov %0, %%dr0"
+		      :
+		      : "rm" ((ulong)dr0));
+}
+static inline void
+asm_wridr1 (ulong dr1)
+{
+	asm volatile ("mov %0, %%dr1"
+		      :
+		      : "rm" ((ulong)dr1));
+}
+static inline void
+asm_wridr2 (ulong dr2)
+{
+	asm volatile ("mov %0, %%dr2"
+		      :
+		      : "rm" ((ulong)dr2));
+}
+static inline void
+asm_wridr3 (ulong dr3)
+{
+	asm volatile ("mov %0, %%dr3"
+		      :
+		      : "rm" ((ulong)dr3));
+}
+
+static inline void
+asm_rddr0 (ulong *dr0)
+{
+	asm volatile ("mov %%dr0,%0"
+		      : "=r" (*dr0));
+}
+static inline void
+asm_rddr1 (ulong *dr1)
+{
+	asm volatile ("mov %%dr1,%0"
+		      : "=r" (*dr1));
+}
+static inline void
+asm_rddr2 (ulong *dr2)
+{
+	asm volatile ("mov %%dr2,%0"
+		      : "=r" (*dr2));
+}
+static inline void
+asm_rddr3 (ulong *dr3)
+{
+	asm volatile ("mov %%dr3,%0"
+		      : "=r" (*dr3));
+}
+static inline void
 asm_rddr7 (ulong *dr7)
 {
 	asm volatile ("mov %%dr7,%0"
