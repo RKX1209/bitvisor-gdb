@@ -168,6 +168,7 @@ vt_update_exception_bmp (void)
 		newbmp = 1 << EXCEPTION_NMI;
 		if (current->u.vt.handle_pagefault)
 			newbmp |= 1 << EXCEPTION_PF;
+		newbmp |= 1 << EXCEPTION_DB;
 	}
 	asm_vmwrite (VMCS_EXCEPTION_BMP, newbmp);
 }
