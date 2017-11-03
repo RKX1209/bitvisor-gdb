@@ -70,11 +70,12 @@ gs             0x0      0x0
 NOTE: Port must be ```1234```.
 
 # Reference
-You can check the information about **Thin hypervisor**.
+You can check the information about **Thin hypervisor** and **GDB remote protocol**.
 
 - What is thin hypervisor  
 http://searchservervirtualization.techtarget.com/definition/thin-hypervisor
 - シン・ハイパーバイザ2017 (前編) (JPN)  
 https://ntddk.github.io/2017/03/04/thin-hypervisor-2017/
-
+- Howto: GDB Remote Serial Protocol Writing a RSP Server  
+http://www.embecosm.com/appnotes/ean4/embecosm-howto-rsp-server-ean4-issue-2.html
 
