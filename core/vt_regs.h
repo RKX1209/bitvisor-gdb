@@ -40,7 +40,7 @@ enum debug_reg {
 	DEBUG_REG_DR1 = 1,
 	DEBUG_REG_DR2 = 2,
 	DEBUG_REG_DR3 = 3,
-	DEBUG_REG_DR7 = 3,
+	DEBUG_REG_DR7 = 7,
 };
 
 struct regs_in_vmcs_sreg {

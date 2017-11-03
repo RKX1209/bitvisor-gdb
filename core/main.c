@@ -46,7 +46,7 @@
 #include "panic.h"
 #include "pcpu.h"
 #include "printf.h"
-#include "process.h" 
+#include "process.h"
 #include "regs.h"
 #include "sleep.h"
 #include "string.h"
@@ -373,7 +373,7 @@ bsp_init_thread (void *args)
 	}
 }
 
-static void
+void
 create_pass_vm (void)
 {
 	bool bsp = false;
@@ -411,6 +411,7 @@ create_pass_vm (void)
 		for (;;)
 			asm_cli_and_hlt ();
 #endif
+	current->freeze = false;
 	current->vmctl.start_vm ();
 	panic ("VM stopped.");
 }

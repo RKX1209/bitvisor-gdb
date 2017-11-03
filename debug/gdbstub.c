@@ -13,7 +13,7 @@
 
 struct vcpu;
 extern struct vcpu *current;
-static GDBState *gdbserver_state;
+GDBState *gdbserver_state;
 
 void gdb_server_send(u8 *buf, u16 len);
 
@@ -132,7 +132,7 @@ static int hw_breakpoint_insert(unsigned long addr, unsigned long len, int type)
   const u8 len_code[] = {
       [1] = 0x0, [2] = 0x1, [4] = 0x3, [8] = 0x2
   };
-  u32 dr7 = 0x0600;
+  unsigned long dr7 = 0x0600;
 
   if (nb_hw_breakpoint > DEBUG_REG_MAX)
     return -1;
@@ -140,7 +140,7 @@ static int hw_breakpoint_insert(unsigned long addr, unsigned long len, int type)
   int n = nb_hw_breakpoint;
   dr7 |= (2 << (n * 2)) |
       (type_code[type] << (16 + n * 4)) |
-      ((u32)len_code[type] << (18 + n * 4));
+      ((u32)len_code[len] << (18 + n * 4));
   vt_write_dr(DEBUG_REG_DR7, dr7);
   nb_hw_breakpoint++;
 }
@@ -169,6 +169,16 @@ static int gdb_breakpoint_remove(unsigned long addr, unsigned long len, int type
 
 }
 
+void gdb_do_sigtrap() {
+  char buf [256];
+  snprintf(buf, sizeof(buf), "S%02x", GDB_SIGNAL_TRAP);
+  gdb_put_packet(gdbserver_state, buf);
+}
+
+static void gdb_continue(GDBState *s) {
+  _vt_start_vm ();
+}
+
 static void gdb_write_buf(GDBState *s, u8 *buf, u16 size) {
   gdb_server_send(buf, size);
 }
@@ -195,7 +205,7 @@ static void gdb_write_packet(GDBState *s, u8 *buf, u16 len) {
   }
 }
 
-static void gdb_put_packet(GDBState *s, char *buf) {
+void gdb_put_packet(GDBState *s, char *buf) {
   gdb_write_packet(s, buf, strlen(buf));
 }
 
@@ -216,6 +226,12 @@ static int gdb_handle_packet(GDBState *s, const char *line_buf) {
     /* XXX: Is it correct to fix thread id to '1'? */
     snprintf(buf, sizeof(buf), "T%02xthread:%02x;", GDB_SIGNAL_TRAP, 1);
     gdb_put_packet(s, buf);
+    break;
+  case 'c':
+    if (*p != '\0') {
+      addr = strtol(p, (char **)&p, 16);
+    }
+    gdb_continue(s);
     break;
   case 'g':
     len = 0;

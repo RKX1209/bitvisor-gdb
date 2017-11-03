@@ -31,7 +31,7 @@ enum debug_reg {
 	DEBUG_REG_DR1 = 1,
 	DEBUG_REG_DR2 = 2,
 	DEBUG_REG_DR3 = 3,
-	DEBUG_REG_DR7 = 3,
+	DEBUG_REG_DR7 = 7,
 };
 
 enum general_reg {
@@ -73,5 +73,5 @@ void vt_read_flags (ulong *val);
 void vt_write_flags (ulong val);
 void vt_read_dr (enum debug_reg reg, ulong *val);
 void vt_write_dr (enum debug_reg reg, ulong val);
-
+void _vt_start_vm (void);
 #endif

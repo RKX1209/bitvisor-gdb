@@ -49,6 +49,8 @@ typedef struct GDBState {
 
 void gdb_stub_init(void);
 void gdb_chr_receive (u8 *buf, u16 size);
+void gdb_do_sigtrap(void);
+void gdb_put_packet(GDBState *s, char *buf);
 
 int nb_hw_breakpoint;
 

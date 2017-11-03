@@ -35,9 +35,9 @@
 #include "types.h"
 #include "vcpu.h"
 
-static struct vcpu *vcpu_list_head;
+struct vcpu *vcpu_list_head;
 static spinlock_t vcpu_list_lock;
-
+static int vcpu_num;
 static void
 vcpu_list_add (struct vcpu *d, struct vcpu **pnext)
 {
@@ -66,6 +66,7 @@ load_new_vcpu (struct vcpu *vcpu0)
 	if (vcpu0 == NULL)
 		vcpu0 = current;
 	current->vcpu0 = vcpu0;
+	current->num = vcpu_num++;
 	spinlock_lock (&vcpu_list_lock);
 	vcpu_list_add (current, &vcpu_list_head);
 	spinlock_unlock (&vcpu_list_lock);
@@ -74,6 +75,7 @@ load_new_vcpu (struct vcpu *vcpu0)
 static void
 vcpu_init_global (void)
 {
+	vcpu_num = 0;
 	vcpu_list_head = NULL;
 	spinlock_init (&vcpu_list_lock);
 }

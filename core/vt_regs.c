@@ -633,6 +633,7 @@ void vt_read_dr (enum debug_reg reg, ulong *val)
 }
 void vt_write_dr (enum debug_reg reg, ulong val)
 {
+	printf ("Write: dr%d = 0x%016lx\n", reg, val);
 	if (reg == DEBUG_REG_DR0)
 		asm_wridr0 (val);
 	else if (reg == DEBUG_REG_DR1)
@@ -641,8 +642,24 @@ void vt_write_dr (enum debug_reg reg, ulong val)
 		asm_wridr2 (val);
 	else if (reg == DEBUG_REG_DR3)
 		asm_wridr3 (val);
-	else if (reg == DEBUG_REG_DR7)
+	else if (reg == DEBUG_REG_DR7) {
+		ulong vmcs;
+		asm_vmptrst (&vmcs);
 		asm_vmwrite (VMCS_GUEST_DR7, val);
+		printf ("vmcs_addr: 0x%016lx, dr7=0x%08lx\n", vmcs, val);
+	}
+}
+
+/* XXX */
+extern struct vcpu *vcpu_list_head;
+void _vt_start_vm (void)
+{
+	printf("Starting VM from (%d)...\n", current->num);
+	struct vcpu *p;
+	for (p = vcpu_list_head; p; p = p->next) {
+		printf("Resume VM(%d)...\n", p->num);
+		p->freeze = false;
+	}
 }
 
 void

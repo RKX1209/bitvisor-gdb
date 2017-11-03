@@ -236,9 +236,12 @@ do_exception (void)
 		switch (vii.s.type) {
 		case INTR_INFO_TYPE_HARD_EXCEPTION:
 			STATUS_UPDATE (asm_lock_incl (&stat_hwexcnt));
-			if (vii.s.vector == EXCEPTION_DB &&
-			    current->u.vt.vr.sw.enable)
+			if (vii.s.vector == EXCEPTION_DB) {
+				printf ("Debug Exception(%d)\n", current->num);
+				gdb_do_sigtrap ();
+				current->freeze = true;
 				break;
+			}
 			if (vii.s.vector == EXCEPTION_PF) {
 				ulong err, cr2;
 
@@ -854,7 +857,6 @@ static void
 vt__exit_reason (void)
 {
 	ulong exit_reason;
-
 	asm_vmread (VMCS_EXIT_REASON, &exit_reason);
 	if (exit_reason & EXIT_REASON_VMENTRY_FAILURE_BIT)
 		panic ("Fatal error: VM Entry failure.");
@@ -981,8 +983,8 @@ vt__halt (void)
 	vt__vm_run ();
 	if (false) {		/* DEBUG */
 		ulong exit_reason;
-
 		asm_vmread (VMCS_EXIT_REASON, &exit_reason);
+		printf("ret from hlt because: %u\n", exit_reason);
 		if (exit_reason & EXIT_REASON_VMENTRY_FAILURE_BIT)
 			panic ("HALT FAILED.");
 	}
@@ -1025,6 +1027,10 @@ vt_mainloop (void)
 		if (current->halt) {
 			vt__halt ();
 			current->halt = false;
+			continue;
+		}
+		if (current->freeze) {
+			//printf("freezed (%d)\n", current->num);
 			continue;
 		}
 		/* when the state is switching between real mode and
