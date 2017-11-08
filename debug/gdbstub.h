@@ -6,6 +6,7 @@
 #define _DEBUG_GDBSTUB_H
 
 #include <core/types.h>
+#include <core/list.h>
 
 #define GDB_BREAKPOINT_SW        0
 #define GDB_BREAKPOINT_HW        1
@@ -36,6 +37,13 @@ enum {
     GDB_SIGNAL_XCPU = 24,
     GDB_SIGNAL_UNKNOWN = 143
 };
+
+typedef struct Breakpoint {
+  LIST1_DEFINE (struct Breakpoint);
+  unsigned long addr;
+  unsigned long len;
+  int type;
+}Breakpoint;
 
 typedef struct GDBState {
   enum RSState state;

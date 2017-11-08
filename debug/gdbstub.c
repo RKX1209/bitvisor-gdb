@@ -14,6 +14,7 @@
 struct vcpu;
 extern struct vcpu *current;
 GDBState *gdbserver_state;
+static LIST1_DEFINE_HEAD (struct Breakpoint, bp_list);
 
 void gdb_server_send(u8 *buf, u16 len);
 
@@ -122,7 +123,7 @@ static int gdb_read_register(u8 *buf, int reg) {
   return sizeof(unsigned long);
 }
 
-static int hw_breakpoint_insert(unsigned long addr, unsigned long len, int type)
+static int sync_debug_reg(void)
 {
   const u8 type_code[] = {
       [GDB_BREAKPOINT_HW] = 0x0,
@@ -132,26 +133,58 @@ static int hw_breakpoint_insert(unsigned long addr, unsigned long len, int type)
   const u8 len_code[] = {
       [1] = 0x0, [2] = 0x1, [4] = 0x3, [8] = 0x2
   };
+  Breakpoint *bp;
   unsigned long dr7 = 0x0600;
+  int n = 0;
+  LIST1_FOREACH (bp_list, bp) {
+    vt_write_dr(n, bp->addr);
+    dr7 |= (2 << (n * 2)) |
+        (type_code[bp->type] << (16 + n * 4)) |
+        ((u32)len_code[bp->len] << (18 + n * 4));
+    n++;
+  }
+  vt_write_dr(DEBUG_REG_DR7, dr7);
+  return 0;
+}
 
+static int hw_breakpoint_insert(unsigned long addr, unsigned long len, int type)
+{
   if (nb_hw_breakpoint > DEBUG_REG_MAX)
     return -1;
-  vt_write_dr(nb_hw_breakpoint, addr);
-  int n = nb_hw_breakpoint;
-  dr7 |= (2 << (n * 2)) |
-      (type_code[type] << (16 + n * 4)) |
-      ((u32)len_code[len] << (18 + n * 4));
-  vt_write_dr(DEBUG_REG_DR7, dr7);
+  Breakpoint *bp = alloc (sizeof *bp);
+  if (!bp)
+    return -1;
+  bp->addr = addr, bp->len = len, bp->type = type;
+  LIST1_ADD (bp_list, bp);
   nb_hw_breakpoint++;
+  sync_debug_reg ();
+  return 0;
+}
+
+static int hw_breakpoint_remove(unsigned long addr, unsigned long len, int type) {
+  if (nb_hw_breakpoint <= 0)
+    return -1;
+  Breakpoint *bp;
+  LIST1_FOREACH (bp_list, bp) {
+    if (addr == bp->addr && len == bp->len && type == bp->type) {
+      nb_hw_breakpoint--;
+      goto found;
+    }
+  }
+  return -1;
+found:
+  LIST1_DEL (bp_list, bp);
+  sync_debug_reg ();  
+  return 0;
 }
 
 static int gdb_breakpoint_insert(unsigned long addr, unsigned long len, int type)
 {
-  int err = 0;
+  int err = -1;
   switch (type) {
     case GDB_BREAKPOINT_SW:
     case GDB_BREAKPOINT_HW:
-      hw_breakpoint_insert (addr, len, type);
+      return hw_breakpoint_insert (addr, len, type);
       break;
     case GDB_WATCHPOINT_WRITE:
     case GDB_WATCHPOINT_READ:
@@ -166,7 +199,20 @@ static int gdb_breakpoint_insert(unsigned long addr, unsigned long len, int type
 
 static int gdb_breakpoint_remove(unsigned long addr, unsigned long len, int type)
 {
-
+  int err = -1;
+  switch (type) {
+    case GDB_BREAKPOINT_SW:
+    case GDB_BREAKPOINT_HW:
+      return hw_breakpoint_remove (addr, len, type);
+    case GDB_WATCHPOINT_WRITE:
+    case GDB_WATCHPOINT_READ:
+    case GDB_WATCHPOINT_ACCESS:
+      /* TODO: */
+      break;
+    default:
+      break;
+  }
+  return err;
 }
 
 void gdb_do_sigtrap() {
@@ -458,6 +504,7 @@ void gdb_chr_receive(u8 *buf, u16 size) {
 void gdb_stub_init(void) {
   GDBState *s;
   s = gdbserver_state;
+  LIST1_HEAD_INIT (bp_list);
   nb_hw_breakpoint = 0;
   if (!s) {
     s = alloc (sizeof (GDBState));
